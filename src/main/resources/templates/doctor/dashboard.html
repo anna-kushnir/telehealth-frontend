@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctor Workspace - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Doctor</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/doctor/dashboard" class="text-blue-600 font-semibold">Upcoming Appointments</a>
+        <a href="/doctor/schedule" class="text-gray-600 hover:text-blue-600 font-medium">Add Working Days</a>
+        <a href="/doctor/history" class="text-gray-600 hover:text-blue-600 font-medium">Appointment History</a>
+        <a href="/logout" class="text-red-500 hover:underline font-medium">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Upcoming Appointments (Earliest First)</h2>
+
+    <div th:if="${success}" class="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm" th:text="${success}"></div>
+
+    <div th:if="${#lists.isEmpty(appointments)}" class="bg-white p-8 rounded-xl text-center text-gray-500 border border-gray-100">
+        No upcoming appointments scheduled.
+    </div>
+
+    <div class="space-y-4">
+        <div th:each="appt, iter : ${appointments}"
+             th:classappend="${iter.index == 0} ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-100'"
+             class="bg-white p-5 rounded-xl shadow-sm border flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span th:if="${iter.index == 0}" class="text-xs font-bold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">Next</span>
+                    <span class="text-lg font-semibold text-gray-800" th:if="${appt.timeSlot != null}"
+                          th:text="${#strings.replace(appt.timeSlot.startTime, 'T', ' ')}">2026-11-23 10:00</span>
+                </div>
+                <p class="text-xs text-gray-500 font-mono mt-1">
+                    Patient Pseudonym: <span th:text="${appt.patientToken}">uuid</span>
+                </p>
+                <p class="text-sm text-gray-600 mt-1" th:if="${appt.notes != null and !appt.notes.isEmpty()}">
+                    Patient Notes: <span th:text="${appt.notes}">Notes</span>
+                </p>
+            </div>
+
+            <div>
+                <a th:href="@{/doctor/consultation/{id}(id=${appt.id}, patientPseudonym=${appt.patientToken})}"
+                   class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition shadow-sm">
+                    Start Video Consultation
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

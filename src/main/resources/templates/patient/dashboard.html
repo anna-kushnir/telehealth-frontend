@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Doctors - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Portal</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/patient/dashboard" class="text-blue-600 font-semibold">Doctors</a>
+        <a href="/patient/book" class="text-gray-600 hover:text-blue-600 font-medium">Book Appointment</a>
+        <a href="/patient/appointments" class="text-gray-600 hover:text-blue-600 font-medium">My Appointments</a>
+        <a href="/patient/medical-history" class="text-gray-600 hover:text-blue-600 font-medium">Medical History & Consents</a>
+        <a href="/patient/erase-data" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 font-medium">Delete My Data</a>
+        <a href="/logout" class="text-gray-500 hover:underline">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    <div th:if="${success}" class="p-3 bg-green-100 text-green-800 rounded-lg text-sm" th:text="${success}"></div>
+    <div th:if="${error}" class="p-3 bg-red-100 text-red-800 rounded-lg text-sm" th:text="${error}"></div>
+
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h3 class="text-sm font-semibold text-gray-800">Personal Profile</h3>
+            <p class="text-xs text-gray-500">Stored under context pseudonym with AES-256-GCM Crypto-Shredding.</p>
+        </div>
+        <form th:action="@{/patient/profile}" method="POST" class="flex flex-wrap items-center gap-3">
+            <input type="text" name="firstName" placeholder="First Name" required
+                   th:value="${patientProfile != null ? patientProfile.firstName : ''}"
+                   class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <input type="text" name="lastName" placeholder="Last Name" required
+                   th:value="${patientProfile != null ? patientProfile.lastName : ''}"
+                   class="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition">
+                Save Profile
+            </button>
+        </form>
+    </section>
+
+    <section>
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Available Specialists</h2>
+            <form method="GET" action="/patient/dashboard" class="flex items-center gap-2">
+                <select name="specialty" onchange="this.form.submit()" class="px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white">
+                    <option value="">All Specialties</option>
+                    <option th:each="spec : ${specialties}" th:value="${spec}" th:text="${spec}"
+                            th:selected="${spec == selectedSpecialty}"></option>
+                </select>
+            </form>
+        </div>
+
+        <div th:if="${#lists.isEmpty(doctors)}" class="bg-white p-8 rounded-xl text-center text-gray-500 border border-gray-100">
+            No doctors available at the moment.
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div th:each="doc : ${doctors}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center text-center">
+                <img th:src="${doc.photoUrl != null ? doc.photoUrl : 'https://placehold.co/150x150/3b82f6/white?text=MD'}"
+                     alt="Doctor photo" class="w-24 h-24 rounded-full mb-4 object-cover shadow-inner">
+                <h3 class="text-lg font-semibold text-gray-800" th:text="${'Dr. ' + doc.firstName + ' ' + doc.lastName}">Doctor Name</h3>
+                <span class="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1 rounded-full mt-1 mb-5" th:text="${doc.specialty}">Specialty</span>
+                <a th:href="@{/patient/book(specialty=${doc.specialty}, doctorId=${doc.doctorId})}"
+                   class="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition">
+                    Book Appointment
+                </a>
+            </div>
+        </div>
+    </section>
+</main>
+
+</body>
+</html>

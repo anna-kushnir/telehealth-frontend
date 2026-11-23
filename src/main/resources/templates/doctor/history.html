@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Appointment History - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Doctor</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/doctor/dashboard" class="text-gray-600 hover:text-blue-600 font-medium">Upcoming Appointments</a>
+        <a href="/doctor/schedule" class="text-gray-600 hover:text-blue-600 font-medium">Add Working Days</a>
+        <a href="/doctor/history" class="text-blue-600 font-semibold">Appointment History</a>
+        <a href="/logout" class="text-red-500 hover:underline font-medium">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Appointment History (Latest First)</h2>
+
+    <div th:if="${#lists.isEmpty(appointments)}" class="bg-white p-8 rounded-xl text-center text-gray-500 border border-gray-100">
+        No completed or past appointments found.
+    </div>
+
+    <div class="space-y-4">
+        <div th:each="appt : ${appointments}" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
+            <div>
+                    <span class="text-base font-semibold text-gray-800" th:if="${appt.timeSlot != null}"
+                          th:text="${#strings.replace(appt.timeSlot.startTime, 'T', ' ')}">2026-11-20 14:00</span>
+                <p class="text-xs text-gray-500 font-mono mt-1">Patient Pseudonym: <span th:text="${appt.patientToken}">uuid</span></p>
+            </div>
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-gray-100 text-gray-700" th:text="${appt.status}">COMPLETED</span>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

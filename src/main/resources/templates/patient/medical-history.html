@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Medical History & Consents - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Portal</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/patient/dashboard" class="text-gray-600 hover:text-blue-600 font-medium">Doctors</a>
+        <a href="/patient/book" class="text-gray-600 hover:text-blue-600 font-medium">Book Appointment</a>
+        <a href="/patient/appointments" class="text-gray-600 hover:text-blue-600 font-medium">My Appointments</a>
+        <a href="/patient/medical-history" class="text-blue-600 font-semibold">Medical History & Consents</a>
+        <a href="/patient/erase-data" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 font-medium">Delete My Data</a>
+        <a href="/logout" class="text-gray-500 hover:underline">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-8 space-y-8">
+    <div th:if="${success}" class="p-3 bg-green-100 text-green-800 rounded-lg text-sm" th:text="${success}"></div>
+    <div th:if="${error}" class="p-3 bg-red-100 text-red-800 rounded-lg text-sm" th:text="${error}"></div>
+
+    <section class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <h2 class="text-xl font-bold text-gray-800 mb-1">Doctor Access Consents</h2>
+        <p class="text-sm text-gray-500 mb-4">Control which doctors are permitted to view your encrypted medical history.</p>
+
+        <div class="divide-y divide-gray-100">
+            <div th:each="doc : ${doctors}" class="py-3 flex items-center justify-between">
+                <div>
+                    <p class="font-medium text-gray-800" th:text="${'Dr. ' + doc.firstName + ' ' + doc.lastName}">Doctor</p>
+                    <p class="text-xs text-gray-500" th:text="${doc.specialty}">Specialty</p>
+                </div>
+                <form th:action="@{/patient/consents}" method="POST"
+                      th:with="isGranted=${consentedDoctorIds.contains(#strings.toString(doc.doctorId))}">
+                    <input type="hidden" name="doctorId" th:value="${doc.doctorId}">
+                    <input type="hidden" name="granted" th:value="${!isGranted}">
+                    <button type="submit"
+                            th:classappend="${isGranted} ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                            class="text-xs font-semibold px-4 py-2 rounded-lg transition"
+                            th:text="${isGranted ? 'Revoke Access' : 'Grant Access'}">
+                        Toggle Consent
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Consultation Reports</h2>
+        <div th:if="${#lists.isEmpty(records)}" class="bg-white p-6 rounded-xl text-center text-gray-500 border border-gray-100">
+            No medical records recorded yet.
+        </div>
+        <div class="space-y-4">
+            <div th:each="rec : ${records}" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-2">
+                        <span class="font-semibold text-gray-800"
+                              th:with="doc=${doctorMap[#strings.toString(rec.doctorId)]}"
+                              th:text="${doc != null ? 'Dr. ' + doc.firstName + ' ' + doc.lastName : 'Doctor'}">Doctor</span>
+                    <span class="text-xs text-gray-400" th:text="${#strings.replace(rec.createdAt, 'T', ' ')}">Date</span>
+                </div>
+                <p class="text-sm font-semibold text-blue-700 mb-1" th:text="${'Diagnosis: ' + rec.diagnosis}">Diagnosis</p>
+                <p class="text-sm text-gray-700 whitespace-pre-line" th:text="${rec.consultationNotes}">Notes</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+</body>
+</html>

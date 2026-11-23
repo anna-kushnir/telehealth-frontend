@@ -1,0 +1,9 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: telehealth-frontend
+
+gateway:
+  url: http://localhost:8080

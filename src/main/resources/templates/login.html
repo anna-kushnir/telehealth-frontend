@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign In - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 flex items-center justify-center h-screen">
+
+<div class="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Sign In</h2>
+
+    <div th:if="${param.registered}" class="mb-4 p-3 bg-green-100 text-green-700 text-sm rounded-lg text-center">
+        Registration successful! Please sign in.
+    </div>
+
+    <div th:if="${error}" class="mb-4 p-3 bg-red-100 text-red-700 text-sm rounded-lg text-center" th:text="${error}"></div>
+
+    <form th:action="@{/login}" method="POST" class="space-y-4">
+
+        <div class="grid grid-cols-3 gap-3 items-center">
+            <label for="email" class="text-right text-sm font-medium text-gray-700">Email:</label>
+            <input type="email" id="email" name="email" required
+                   class="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3 items-center">
+            <label for="password" class="text-right text-sm font-medium text-gray-700">Password:</label>
+            <input type="password" id="password" name="password" required
+                   class="col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+
+        <div class="flex flex-col items-center mt-6 space-y-3">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 shadow-md">
+                Continue
+            </button>
+
+            <a href="/register" class="text-sm text-blue-600 hover:underline">
+                Don't have an account? Sign Up
+            </a>
+        </div>
+
+    </form>
+</div>
+
+</body>
+</html>

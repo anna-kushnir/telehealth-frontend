@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>My Appointments - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Portal</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/patient/dashboard" class="text-gray-600 hover:text-blue-600 font-medium">Doctors</a>
+        <a href="/patient/book" class="text-gray-600 hover:text-blue-600 font-medium">Book Appointment</a>
+        <a href="/patient/appointments" class="text-blue-600 font-semibold">My Appointments</a>
+        <a href="/patient/medical-history" class="text-gray-600 hover:text-blue-600 font-medium">Medical History & Consents</a>
+        <a href="/patient/erase-data" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 font-medium">Delete My Data</a>
+        <a href="/logout" class="text-gray-500 hover:underline">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-5xl mx-auto px-4 py-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">My Appointments</h2>
+
+    <div th:if="${success}" class="mb-4 p-3 bg-green-100 text-green-800 rounded-lg text-sm" th:text="${success}"></div>
+
+    <div th:if="${#lists.isEmpty(appointments)}" class="bg-white p-8 rounded-xl text-center text-gray-500 border border-gray-100">
+        You have no scheduled appointments yet.
+    </div>
+
+    <div class="space-y-4">
+        <div th:each="appt : ${appointments}" class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                        <span class="text-lg font-semibold text-gray-800"
+                              th:with="doc=${doctorMap[#strings.toString(appt.doctorId)]}"
+                              th:text="${doc != null ? 'Dr. ' + doc.firstName + ' ' + doc.lastName + ' (' + doc.specialty + ')' : 'Doctor ID: ' + appt.doctorId}">
+                            Doctor
+                        </span>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700" th:text="${appt.status}">PLANNED</span>
+                </div>
+                <p class="text-sm text-gray-600 mt-1" th:if="${appt.timeSlot != null}">
+                    Time: <strong th:text="${#strings.replace(appt.timeSlot.startTime, 'T', ' ')}">2026-11-23 10:00</strong>
+                </p>
+                <p class="text-xs text-gray-500 mt-1" th:if="${appt.notes != null and !appt.notes.isEmpty()}">
+                    Notes: <span th:text="${appt.notes}">Notes</span>
+                </p>
+            </div>
+
+            <div th:if="${#strings.equals(appt.status, 'PLANNED')}">
+                <a th:href="@{'https://meet.jit.si/TeleHealth-Consult-' + ${appt.id} + '-' + ${#strings.substring(appt.patientToken, 0, 8)}}"
+                   target="_blank"
+                   class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
+                    Join Video Consultation
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

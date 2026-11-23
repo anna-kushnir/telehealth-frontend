@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Consultation - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Consultation Room</span>
+    <a href="/doctor/dashboard" class="text-sm text-gray-600 hover:text-blue-600 font-medium">Back to Appointments</a>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-black rounded-xl overflow-hidden shadow-md h-[540px]">
+        <iframe th:src="@{'https://meet.jit.si/' + ${roomName}}"
+                allow="camera; microphone; fullscreen; display-capture"
+                class="w-full h-full border-0"></iframe>
+    </div>
+
+    <div class="space-y-6">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Consultation Report</h3>
+            <div th:if="${error}" class="mb-3 p-2 bg-red-100 text-red-700 text-xs rounded" th:text="${error}"></div>
+
+            <form th:action="@{/doctor/consultation/{id}/report(id=${appointmentId})}" method="POST" class="space-y-3">
+                <input type="hidden" name="patientPseudonym" th:value="${patientPseudonym}">
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Diagnosis:</label>
+                    <input type="text" name="diagnosis" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Clinical Notes & Prescription:</label>
+                    <textarea name="consultationNotes" rows="4" required class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2 rounded-lg transition">
+                    Save Encrypted Report
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-100">
+            <h3 class="text-base font-bold text-gray-800 mb-2">Patient Medical History</h3>
+            <div th:unless="${consentGranted}" class="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-lg">
+                Access Restricted: Patient has not granted consent to view prior medical records.
+            </div>
+            <div th:if="${consentGranted and #lists.isEmpty(history)}" class="text-xs text-gray-500">
+                No prior medical records available.
+            </div>
+            <div th:if="${consentGranted}" class="space-y-3 max-h-60 overflow-y-auto">
+                <div th:each="item : ${history}" class="p-3 bg-gray-50 rounded-lg text-xs border border-gray-100">
+                    <p class="font-semibold text-blue-700" th:text="${'Diagnosis: ' + item.diagnosis}">Diagnosis</p>
+                    <p class="text-gray-600 mt-1" th:text="${item.consultationNotes}">Notes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

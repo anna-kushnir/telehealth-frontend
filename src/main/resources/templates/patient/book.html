@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Appointment - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Portal</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a href="/patient/dashboard" class="text-gray-600 hover:text-blue-600 font-medium">Doctors</a>
+        <a href="/patient/book" class="text-blue-600 font-semibold">Book Appointment</a>
+        <a href="/patient/appointments" class="text-gray-600 hover:text-blue-600 font-medium">My Appointments</a>
+        <a href="/patient/medical-history" class="text-gray-600 hover:text-blue-600 font-medium">Medical History & Consents</a>
+        <a href="/patient/erase-data" class="text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-200 font-medium">Delete My Data</a>
+        <a href="/logout" class="text-gray-500 hover:underline">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-2xl mx-auto px-4 py-10">
+    <div class="bg-white p-8 rounded-xl shadow-md border border-gray-100 space-y-6">
+        <h2 class="text-2xl font-bold text-gray-800 text-center">Book a Video Consultation</h2>
+
+        <div th:if="${error}" class="p-3 bg-red-100 text-red-700 text-sm rounded-lg" th:text="${error}"></div>
+
+        <form method="GET" action="/patient/book" class="space-y-4">
+            <div class="grid grid-cols-3 gap-3 items-center">
+                <label class="text-right text-sm font-medium text-gray-700">Specialty:</label>
+                <select name="specialty" onchange="this.form.submit()" class="col-span-2 px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">All Specialties</option>
+                    <option th:each="spec : ${specialties}" th:value="${spec}" th:text="${spec}"
+                            th:selected="${spec == selectedSpecialty}"></option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 items-center">
+                <label class="text-right text-sm font-medium text-gray-700">Doctor:</label>
+                <select name="doctorId" onchange="this.form.submit()" class="col-span-2 px-3 py-2 border border-gray-300 rounded-lg">
+                    <option value="">-- Select a Doctor --</option>
+                    <option th:each="doc : ${doctors}" th:value="${doc.doctorId}"
+                            th:text="${'Dr. ' + doc.firstName + ' ' + doc.lastName + ' (' + doc.specialty + ')'}"
+                            th:selected="${#strings.equals(doc.doctorId, selectedDoctorId)}"></option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3 items-center">
+                <label class="text-right text-sm font-medium text-gray-700">Week Starting:</label>
+                <input type="date" name="date" th:value="${selectedDate}" onchange="this.form.submit()"
+                       class="col-span-2 px-3 py-2 border border-gray-300 rounded-lg">
+            </div>
+        </form>
+
+        <form th:if="${selectedDoctorId != null and !selectedDoctorId.isEmpty()}" th:action="@{/patient/book}" method="POST" class="space-y-5 pt-4 border-t border-gray-100">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Available Time Slots (Next 7 Days):</label>
+                <div th:if="${#lists.isEmpty(slots)}" class="p-4 bg-gray-50 text-gray-500 text-sm rounded-lg text-center">
+                    No open slots found for this period. Try another week or doctor.
+                </div>
+                <div th:unless="${#lists.isEmpty(slots)}" class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-1">
+                    <label th:each="slot : ${slots}" class="border border-blue-200 bg-blue-50/60 hover:bg-blue-100 p-2.5 rounded-lg text-center cursor-pointer text-xs font-semibold text-blue-800 flex items-center justify-center gap-2">
+                        <input type="radio" name="slotId" th:value="${slot.id}" required class="text-blue-600">
+                        <span th:text="${#strings.replace(slot.startTime, 'T', ' ')}">2026-11-23 10:00</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms / Notes:</label>
+                <textarea name="notes" rows="3" placeholder="Briefly describe your reason for consultation..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <div class="flex justify-center space-x-3 pt-2">
+                <a href="/patient/dashboard" class="w-1/2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg text-center transition">Cancel</a>
+                <button type="submit" th:disabled="${#lists.isEmpty(slots)}"
+                        class="w-1/2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-semibold py-2 px-4 rounded-lg transition shadow-md">
+                    Confirm Booking
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+</body>
+</html>
