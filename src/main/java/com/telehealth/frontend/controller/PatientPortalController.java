@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +43,25 @@ public class PatientPortalController {
         model.addAttribute("specialties", specialties);
         model.addAttribute("selectedSpecialty", specialty);
         model.addAttribute("patientProfile", apiService.getMyPatientProfile(token));
+        model.addAttribute("is2faEnabled", apiService.get2faStatus(token));
         return "patient/dashboard";
+    }
+
+    @PostMapping("/2fa")
+    public String toggle2fa(@RequestParam(defaultValue = "false") boolean enabled,
+                            HttpSession session, RedirectAttributes redirectAttributes) {
+        String token = getToken(session);
+        if (token == null) return "redirect:/login";
+        try {
+            apiService.update2faStatus(token, enabled);
+            session.invalidate();
+            redirectAttributes.addFlashAttribute("registered", true);
+            return "redirect:/login";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to update 2FA: " + apiService.extractErrorMessage(e, "Error"));
+        }
+        return "redirect:/patient/dashboard";
     }
 
     @PostMapping("/profile")
@@ -115,7 +134,21 @@ public class PatientPortalController {
         String token = getToken(session);
         if (token == null) return "redirect:/login";
 
-        List<Map<String, Object>> appointments = apiService.getMyAppointments(token);
+        LocalDateTime now = LocalDateTime.now();
+        List<Map<String, Object>> appointments = apiService.getMyAppointments(token).stream()
+                .map(a -> {
+                    Map<String, Object> copy = new HashMap<>(a);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> slot = (Map<String, Object>) a.get("timeSlot");
+                    boolean canJoin = false;
+                    if (slot != null && slot.get("startTime") != null && slot.get("endTime") != null) {
+                        LocalDateTime start = LocalDateTime.parse(String.valueOf(slot.get("startTime")));
+                        LocalDateTime end = LocalDateTime.parse(String.valueOf(slot.get("endTime")));
+                        canJoin = !now.isBefore(start.minusMinutes(5)) && !now.isAfter(end.plusMinutes(15));
+                    }
+                    copy.put("canJoin", canJoin);
+                    return copy;
+                }).toList();
         Map<String, Map<String, Object>> doctorMap = apiService.getDoctorsMap();
 
         model.addAttribute("appointments", appointments);
@@ -187,8 +220,9 @@ public class PatientPortalController {
                     "All personal data has been cryptographically shredded.");
             return "redirect:/login";
         } catch (Exception e) {
+            String errMsg = apiService.extractErrorMessage(e, "Invalid verification code.");
             redirectAttributes.addFlashAttribute("error",
-                    "Verification failed or erasure error: " + e.getMessage());
+                    "Verification failed or erasure error: " + errMsg);
             return "redirect:/patient/erase-data";
         }
     }

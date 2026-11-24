@@ -135,6 +135,30 @@ public class TelehealthApiService {
         restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(body, buildHeaders(token)), Map.class);
     }
 
+    public void completeAppointment(String token, Long appointmentId) {
+        String url = gatewayUrl + "/api/v1/appointments/" + appointmentId + "/complete";
+        restTemplate.exchange(url, HttpMethod.PATCH, new HttpEntity<>(buildHeaders(token)), Map.class);
+    }
+
+    public boolean get2faStatus(String token) {
+        String url = gatewayUrl + "/api/v1/auth/2fa/status";
+        try {
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    url, HttpMethod.GET, new HttpEntity<>(buildHeaders(token)),
+                    new ParameterizedTypeReference<>() {}
+            );
+            return response.getBody() != null && Boolean.TRUE.equals(response.getBody().get("enabled"));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public void update2faStatus(String token, boolean enabled) {
+        String url = gatewayUrl + "/api/v1/auth/2fa";
+        restTemplate.exchange(url, HttpMethod.PATCH, new HttpEntity<>(
+                Map.of("enabled", enabled), buildHeaders(token)), Map.class);
+    }
+
     // ----- Consents & Medical Records -----
 
     public List<Map<String, Object>> getMyConsents(String token) {

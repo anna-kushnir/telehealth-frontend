@@ -41,6 +41,24 @@
         </form>
     </section>
 
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
+        <div>
+            <h3 class="text-sm font-semibold text-gray-800">Two-Factor Authentication (Step-Up MFA)</h3>
+            <p class="text-xs text-gray-500">Required to view decrypted medical records and manage doctor consents.</p>
+        </div>
+        <form th:action="@{/patient/2fa}" method="POST" class="flex items-center gap-3">
+            <span th:if="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">2FA Enabled</span>
+            <span th:unless="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">2FA Disabled</span>
+            <input type="hidden" name="enabled" th:value="${!is2faEnabled}">
+            <button type="submit"
+                    th:classappend="${is2faEnabled} ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                    class="text-sm font-medium px-4 py-1.5 rounded-lg transition"
+                    th:text="${is2faEnabled ? 'Disable 2FA' : 'Enable 2FA & Re-login'}">
+                Toggle 2FA
+            </button>
+        </form>
+    </section>
+
     <section>
         <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Available Specialists</h2>

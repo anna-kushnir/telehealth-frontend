@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Controller
@@ -33,9 +34,23 @@ public class DoctorPortalController {
         if (token == null) return "redirect:/login";
         String doctorId = getDoctorId(session);
 
+        LocalDateTime now = LocalDateTime.now();
         List<Map<String, Object>> all = apiService.getDoctorAppointments(token, doctorId);
         List<Map<String, Object>> upcoming = all.stream()
                 .filter(a -> "PLANNED".equals(String.valueOf(a.get("status"))))
+                .map(a -> {
+                    Map<String, Object> copy = new HashMap<>(a);
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> slot = (Map<String, Object>) a.get("timeSlot");
+                    boolean canJoin = false;
+                    if (slot != null && slot.get("startTime") != null && slot.get("endTime") != null) {
+                        LocalDateTime start = LocalDateTime.parse(String.valueOf(slot.get("startTime")));
+                        LocalDateTime end = LocalDateTime.parse(String.valueOf(slot.get("endTime")));
+                        canJoin = !now.isBefore(start.minusMinutes(5)) && !now.isAfter(end.plusMinutes(15));
+                    }
+                    copy.put("canJoin", canJoin);
+                    return copy;
+                })
                 .sorted(Comparator.comparing(a -> {
                     @SuppressWarnings("unchecked")
                     Map<String, Object> slot = (Map<String, Object>) a.get("timeSlot");
@@ -162,7 +177,8 @@ public class DoctorPortalController {
         try {
             apiService.createMedicalRecord(token, doctorId, patientPseudonym,
                     appointmentId, diagnosis, consultationNotes);
-            redirectAttributes.addFlashAttribute("success", "Medical report saved.");
+            apiService.completeAppointment(token, appointmentId);
+            redirectAttributes.addFlashAttribute("success", "Medical report saved and appointment marked as COMPLETED.");
             return "redirect:/doctor/dashboard";
         } catch (Exception e) {
             String errMsg = apiService.extractErrorMessage(e, "Bad formatted data or something went wrong.");

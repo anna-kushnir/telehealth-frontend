@@ -45,10 +45,15 @@
             </div>
 
             <div>
-                <a th:href="@{/doctor/consultation/{id}(id=${appt.id}, patientPseudonym=${appt.patientToken})}"
+                <a th:if="${appt.canJoin}"
+                   th:href="@{/doctor/consultation/{id}(id=${appt.id}, patientPseudonym=${appt.patientToken})}"
                    class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition shadow-sm">
                     Start Video Consultation
                 </a>
+                <span th:unless="${appt.canJoin}"
+                      class="inline-block bg-gray-100 text-gray-400 text-xs font-semibold px-4 py-2.5 rounded-lg border border-gray-200 cursor-not-allowed">
+                        Available 5 min before start
+                    </span>
             </div>
         </div>
     </div>

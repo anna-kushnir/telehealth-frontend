@@ -48,11 +48,16 @@
             </div>
 
             <div th:if="${#strings.equals(appt.status, 'PLANNED')}">
-                <a th:href="@{'https://meet.jit.si/TeleHealth-Consult-' + ${appt.id} + '-' + ${#strings.substring(appt.patientToken, 0, 8)}}"
+                <a th:if="${appt.canJoin}"
+                   th:href="@{'https://meet.jit.si/TeleHealth-Consult-' + ${appt.id} + '-' + ${#strings.substring(appt.patientToken, 0, 8)}}"
                    target="_blank"
                    class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition shadow-sm">
                     Join Video Consultation
                 </a>
+                <span th:unless="${appt.canJoin}"
+                      class="inline-block bg-gray-100 text-gray-400 text-xs font-semibold px-4 py-2 rounded-lg border border-gray-200 cursor-not-allowed">
+                        Available 5 min before start
+                    </span>
             </div>
         </div>
     </div>
