@@ -41,22 +41,55 @@
         </form>
     </section>
 
-    <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <h3 class="text-sm font-semibold text-gray-800">Two-Factor Authentication (Step-Up MFA)</h3>
-            <p class="text-xs text-gray-500">Required to view decrypted medical records and manage doctor consents.</p>
+    <section class="bg-white p-5 rounded-xl shadow-sm border border-gray-100 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h3 class="text-sm font-semibold text-gray-800">Multi-Factor Authentication (Pluggable MFA Providers)</h3>
+                <p class="text-xs text-gray-500">
+                    Active method: <strong class="text-gray-700" th:text="${is2faEnabled ? mfaFactor : 'NONE'}">EMAIL_OTP</strong>. Required for encrypted medical records.
+                </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                    <span th:if="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700"
+                          th:text="${'2FA Active (' + mfaFactor + ')'}">2FA Enabled</span>
+                <span th:unless="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">2FA Disabled</span>
+
+                <form th:action="@{/patient/mfa/totp/enroll}" method="POST">
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg transition">
+                        Setup Authenticator App (TOTP)
+                    </button>
+                </form>
+
+                <form th:if="${is2faEnabled and mfaFactor == 'TOTP'}" th:action="@{/patient/mfa/factor}" method="POST">
+                    <input type="hidden" name="factor" value="EMAIL_OTP">
+                    <button type="submit" class="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1.5 rounded-lg transition">
+                        Switch to Email OTP
+                    </button>
+                </form>
+
+                <form th:action="@{/patient/2fa}" method="POST">
+                    <input type="hidden" name="enabled" th:value="${!is2faEnabled}">
+                    <button type="submit"
+                            th:classappend="${is2faEnabled} ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700'"
+                            class="text-xs font-medium px-3.5 py-1.5 rounded-lg transition"
+                            th:text="${is2faEnabled ? 'Disable 2FA & Re-login' : 'Enable Email 2FA & Re-login'}">
+                        Toggle 2FA
+                    </button>
+                </form>
+            </div>
         </div>
-        <form th:action="@{/patient/2fa}" method="POST" class="flex items-center gap-3">
-            <span th:if="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">2FA Enabled</span>
-            <span th:unless="${is2faEnabled}" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">2FA Disabled</span>
-            <input type="hidden" name="enabled" th:value="${!is2faEnabled}">
-            <button type="submit"
-                    th:classappend="${is2faEnabled} ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' : 'bg-blue-600 text-white hover:bg-blue-700'"
-                    class="text-sm font-medium px-4 py-1.5 rounded-lg transition"
-                    th:text="${is2faEnabled ? 'Disable 2FA' : 'Enable 2FA & Re-login'}">
-                Toggle 2FA
-            </button>
-        </form>
+
+        <div th:if="${totpUri}" class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-wrap items-center gap-6">
+            <img th:src="@{'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + ${totpUri}}"
+                 alt="TOTP QR Code" class="w-36 h-36 rounded-lg bg-white p-2 shadow-sm">
+            <div class="space-y-2 text-sm">
+                <p class="font-bold text-indigo-900">Scan QR Code with Google or Microsoft Authenticator</p>
+                <p class="text-xs text-indigo-800">Manual setup secret key: <code class="bg-white px-2 py-0.5 rounded font-mono font-bold" th:text="${totpSecret}">SECRET</code></p>
+                <a href="/logout" class="inline-block mt-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg">
+                    Done — Sign Out & Test TOTP Login
+                </a>
+            </div>
+        </div>
     </section>
 
     <section>

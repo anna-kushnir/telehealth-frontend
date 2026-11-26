@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Security & MFA Settings - TeleHealth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+    <span class="text-xl font-bold text-blue-600">TeleHealth Security</span>
+    <div class="flex items-center space-x-6 text-sm">
+        <a th:href="${homeUrl}" class="text-gray-600 hover:text-blue-600 font-medium">Back to Workspace</a>
+        <a href="/logout" class="text-red-500 hover:underline font-medium">Sign Out</a>
+    </div>
+</nav>
+
+<main class="max-w-2xl mx-auto px-4 py-10 space-y-6">
+    <div th:if="${success}" class="p-3 bg-green-100 text-green-800 rounded-lg text-sm" th:text="${success}"></div>
+    <div th:if="${error}" class="p-3 bg-red-100 text-red-800 rounded-lg text-sm" th:text="${error}"></div>
+
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 space-y-5">
+        <div>
+            <h2 class="text-xl font-bold text-gray-800">Multi-Factor Authentication (MFA)</h2>
+            <p class="text-sm text-gray-500 mt-1">
+                Mandatory 2FA is active for staff accounts. Current factor:
+                <strong class="text-blue-600" th:text="${mfaFactor}">EMAIL_OTP</strong>
+            </p>
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+            <form th:action="@{/security/mfa/totp/enroll}" method="POST">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition">
+                    Configure Authenticator App (TOTP)
+                </button>
+            </form>
+
+            <form th:if="${mfaFactor == 'TOTP'}" th:action="@{/security/mfa/factor}" method="POST">
+                <input type="hidden" name="factor" value="EMAIL_OTP">
+                <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg transition">
+                    Switch Back to Email OTP
+                </button>
+            </form>
+        </div>
+
+        <div th:if="${totpUri}" class="p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-wrap items-center gap-6">
+            <img th:src="@{'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + ${totpUri}}"
+                 alt="TOTP QR Code" class="w-40 h-40 rounded-lg bg-white p-2 shadow-sm">
+            <div class="space-y-2 text-sm">
+                <p class="font-bold text-indigo-900">Scan QR Code in Authenticator App</p>
+                <p class="text-xs text-indigo-800">Manual Key: <code class="bg-white px-2 py-0.5 rounded font-mono font-bold" th:text="${totpSecret}">SECRET</code></p>
+                <a href="/logout" class="inline-block mt-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2 rounded-lg">
+                    Sign Out & Verify with TOTP
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

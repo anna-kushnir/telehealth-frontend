@@ -43,8 +43,45 @@ public class PatientPortalController {
         model.addAttribute("specialties", specialties);
         model.addAttribute("selectedSpecialty", specialty);
         model.addAttribute("patientProfile", apiService.getMyPatientProfile(token));
-        model.addAttribute("is2faEnabled", apiService.get2faStatus(token));
+
+        Map<String, Object> mfaDetails = apiService.getMfaDetails(token);
+        model.addAttribute("is2faEnabled", Boolean.TRUE.equals(mfaDetails.get("enabled")));
+        model.addAttribute("mfaFactor", mfaDetails.get("factor"));
         return "patient/dashboard";
+    }
+
+    @PostMapping("/mfa/totp/enroll")
+    public String enrollTotp(HttpSession session, RedirectAttributes redirectAttributes) {
+        String token = getToken(session);
+        if (token == null) return "redirect:/login";
+        try {
+            Map<String, Object> enrollment = apiService.enrollTotp(token);
+            redirectAttributes.addFlashAttribute("totpSecret", enrollment.get("secret"));
+            redirectAttributes.addFlashAttribute("totpUri", enrollment.get("otpAuthUri"));
+            redirectAttributes.addFlashAttribute("success",
+                    "Scan this QR code in Google/Microsoft Authenticator before signing out.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "TOTP setup failed: " + apiService.extractErrorMessage(e, "Error"));
+        }
+        return "redirect:/patient/dashboard";
+    }
+
+    @PostMapping("/mfa/factor")
+    public String switchFactor(@RequestParam String factor, HttpSession session,
+                               RedirectAttributes redirectAttributes) {
+        String token = getToken(session);
+        if (token == null) return "redirect:/login";
+        try {
+            apiService.switchMfaFactor(token, factor);
+            session.invalidate();
+            redirectAttributes.addFlashAttribute("registered", true);
+            return "redirect:/login";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Failed to switch MFA factor: " + apiService.extractErrorMessage(e, "Error"));
+            return "redirect:/patient/dashboard";
+        }
     }
 
     @PostMapping("/2fa")
@@ -148,7 +185,27 @@ public class PatientPortalController {
                     }
                     copy.put("canJoin", canJoin);
                     return copy;
-                }).toList();
+                })
+                .sorted((a, b) -> {
+                    boolean isPlannedA = "PLANNED".equals(String.valueOf(a.get("status")));
+                    boolean isPlannedB = "PLANNED".equals(String.valueOf(b.get("status")));
+
+                    if (isPlannedA != isPlannedB) {
+                        return isPlannedA ? -1 : 1;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> slotA = (Map<String, Object>) a.get("timeSlot");
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> slotB = (Map<String, Object>) b.get("timeSlot");
+                    String timeA = slotA != null && slotA.get("startTime") != null
+                            ? String.valueOf(slotA.get("startTime")) : "";
+                    String timeB = slotB != null && slotB.get("startTime") != null
+                            ? String.valueOf(slotB.get("startTime")) : "";
+
+                    return isPlannedA ? timeA.compareTo(timeB) : timeB.compareTo(timeA);
+                })
+                .toList();
         Map<String, Map<String, Object>> doctorMap = apiService.getDoctorsMap();
 
         model.addAttribute("appointments", appointments);

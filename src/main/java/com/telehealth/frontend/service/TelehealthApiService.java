@@ -80,11 +80,6 @@ public class TelehealthApiService {
                 .collect(Collectors.toSet());
     }
 
-    public Map<String, Object> getDoctorById(String doctorId) {
-        String url = gatewayUrl + "/api/v1/profiles/doctors/" + doctorId;
-        return sendGetRequestWithTokenReturnsEntity(null, url);
-    }
-
     public Map<String, Object> getMyPatientProfile(String token) {
         String url = gatewayUrl + "/api/v1/profiles/patient/me";
         try {
@@ -140,17 +135,33 @@ public class TelehealthApiService {
         restTemplate.exchange(url, HttpMethod.PATCH, new HttpEntity<>(buildHeaders(token)), Map.class);
     }
 
-    public boolean get2faStatus(String token) {
+    public Map<String, Object> getMfaDetails(String token) {
         String url = gatewayUrl + "/api/v1/auth/2fa/status";
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     url, HttpMethod.GET, new HttpEntity<>(buildHeaders(token)),
                     new ParameterizedTypeReference<>() {}
             );
-            return response.getBody() != null && Boolean.TRUE.equals(response.getBody().get("enabled"));
+            return response.getBody() != null ? response.getBody() : Map.of(
+                    "enabled", false, "factor", "EMAIL_OTP");
         } catch (Exception e) {
-            return false;
+            return Map.of("enabled", false, "factor", "EMAIL_OTP");
         }
+    }
+
+    public Map<String, Object> enrollTotp(String token) {
+        String url = gatewayUrl + "/api/v1/auth/mfa/totp/enroll";
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url, HttpMethod.POST, new HttpEntity<>(buildHeaders(token)),
+                new ParameterizedTypeReference<>() {}
+        );
+        return response.getBody();
+    }
+
+    public void switchMfaFactor(String token, String factor) {
+        String url = gatewayUrl + "/api/v1/auth/mfa/factor";
+        restTemplate.exchange(url, HttpMethod.PATCH,
+                new HttpEntity<>(Map.of("factor", factor), buildHeaders(token)), Map.class);
     }
 
     public void update2faStatus(String token, boolean enabled) {
